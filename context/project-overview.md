@@ -10,15 +10,15 @@ DevStash gives developers a single home for the essentials that are normally sca
 
 Developers keep their essentials scattered:
 
-| Resource | Where it lives today |
-| --- | --- |
-| Code snippets | VS Code, Notion |
-| AI prompts | Chat histories |
-| Context files | Buried in projects |
-| Useful links | Browser bookmarks |
-| Docs | Random folders |
-| Commands | `.txt` files, bash history |
-| Project templates | GitHub gists |
+| Resource          | Where it lives today       |
+| ----------------- | -------------------------- |
+| Code snippets     | VS Code, Notion            |
+| AI prompts        | Chat histories             |
+| Context files     | Buried in projects         |
+| Useful links      | Browser bookmarks          |
+| Docs              | Random folders             |
+| Commands          | `.txt` files, bash history |
+| Project templates | GitHub gists               |
 
 The result: **context switching, lost knowledge, and inconsistent workflows.** DevStash consolidates all of it into one searchable, AI-enhanced hub.
 
@@ -39,15 +39,15 @@ The result: **context switching, lost knowledge, and inconsistent workflows.** D
 
 Every stashed resource is an **Item** with a **type**. Users can create custom types (Pro, later), but these **system types** ship first and are immutable:
 
-| Type | Category | Tier | Route example |
-| --- | --- | --- | --- |
-| Snippet | text | Free | `/items/snippets` |
-| Prompt | text | Free | `/items/prompts` |
-| Note | text | Free | `/items/notes` |
-| Command | text | Free | `/items/commands` |
-| Link | url | Free | `/items/links` |
-| File | file | **Pro** | `/items/files` |
-| Image | file | **Pro** | `/items/images` |
+| Type    | Category | Tier    | Route example     |
+| ------- | -------- | ------- | ----------------- |
+| Snippet | text     | Free    | `/items/snippets` |
+| Prompt  | text     | Free    | `/items/prompts`  |
+| Note    | text     | Free    | `/items/notes`    |
+| Command | text     | Free    | `/items/commands` |
+| Link    | url      | Free    | `/items/links`    |
+| File    | file     | **Pro** | `/items/files`    |
+| Image   | file     | **Pro** | `/items/images`   |
 
 A type resolves to one of three **content categories**: `text` (snippet, prompt, note, command), `url` (link), or `file` (file, image).
 
@@ -55,7 +55,7 @@ Items should be **quick to create and access via a drawer** — no full page nav
 
 ### B. Collections
 
-Users group items into **Collections**. An item can belong to **multiple** collections (many-to-many) — e.g. a React snippet in both *React Patterns* and *Interview Prep*.
+Users group items into **Collections**. An item can belong to **multiple** collections (many-to-many) — e.g. a React snippet in both _React Patterns_ and _Interview Prep_.
 
 Examples: `React Patterns` · `Context Files` · `Python Snippets`
 
@@ -253,17 +253,17 @@ model Tag {
 
 ## 🛠️ Tech Stack
 
-| Layer | Choice | Notes |
-| --- | --- | --- |
-| Framework | [Next.js 16](https://nextjs.org) / [React 19](https://react.dev) | SSR pages + dynamic components; API routes for backend |
-| Language | [TypeScript](https://www.typescriptlang.org) | End-to-end type safety |
-| Database | [Neon](https://neon.tech) (PostgreSQL) | Serverless Postgres in the cloud |
-| ORM | [Prisma 7](https://www.prisma.io/docs) | Migrations only — **no `db push`** |
-| Caching | [Redis](https://redis.io) | *Maybe* — TBD |
-| File storage | [Cloudflare R2](https://developers.cloudflare.com/r2/) | Uploads for file/image types |
-| Auth | [NextAuth v5](https://authjs.dev) | Email/password + GitHub OAuth |
-| AI | [OpenAI](https://platform.openai.com/docs) `gpt-5-nano` | Tagging, summaries, explain, optimize |
-| Styling | [Tailwind CSS v4](https://tailwindcss.com) + [shadcn/ui](https://ui.shadcn.com) | |
+| Layer        | Choice                                                                          | Notes                                                  |
+| ------------ | ------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| Framework    | [Next.js 16](https://nextjs.org) / [React 19](https://react.dev)                | SSR pages + dynamic components; API routes for backend |
+| Language     | [TypeScript](https://www.typescriptlang.org)                                    | End-to-end type safety                                 |
+| Database     | [Neon](https://neon.tech) (PostgreSQL)                                          | Serverless Postgres in the cloud                       |
+| ORM          | [Prisma 7](https://www.prisma.io/docs)                                          | Migrations only — **no `db push`**                     |
+| Caching      | [Redis](https://redis.io)                                                       | _Maybe_ — TBD                                          |
+| File storage | [Cloudflare R2](https://developers.cloudflare.com/r2/)                          | Uploads for file/image types                           |
+| Auth         | [NextAuth v5](https://authjs.dev)                                               | Email/password + GitHub OAuth                          |
+| AI           | [OpenAI](https://platform.openai.com/docs) `gpt-5-nano`                         | Tagging, summaries, explain, optimize                  |
+| Styling      | [Tailwind CSS v4](https://tailwindcss.com) + [shadcn/ui](https://ui.shadcn.com) |                                                        |
 
 **Architecture principle:** one codebase / one repo for less overhead.
 
@@ -288,7 +288,7 @@ model Tag {
 
 - Unlimited items & collections
 - File & image uploads
-- Custom types *(later)*
+- Custom types _(later)_
 - AI auto-tagging, code explanation, prompt optimizer
 - Data export (JSON / ZIP)
 - Priority support
@@ -338,15 +338,15 @@ flowchart LR
 
 Icons are [Lucide](https://lucide.dev) names.
 
-| Type | Icon | Color | Swatch |
-| --- | --- | --- | --- |
-| Snippet | `Code` | `#3b82f6` | 🔵 blue |
-| Prompt | `Sparkles` | `#8b5cf6` | 🟣 purple |
-| Command | `Terminal` | `#f97316` | 🟠 orange |
-| Note | `StickyNote` | `#fde047` | 🟡 yellow |
-| File | `File` | `#6b7280` | ⚪ gray |
-| Image | `Image` | `#ec4899` | 🌸 pink |
-| Link | `Link` | `#10b981` | 🟢 emerald |
+| Type    | Icon         | Color     | Swatch     |
+| ------- | ------------ | --------- | ---------- |
+| Snippet | `Code`       | `#3b82f6` | 🔵 blue    |
+| Prompt  | `Sparkles`   | `#8b5cf6` | 🟣 purple  |
+| Command | `Terminal`   | `#f97316` | 🟠 orange  |
+| Note    | `StickyNote` | `#fde047` | 🟡 yellow  |
+| File    | `File`       | `#6b7280` | ⚪ gray    |
+| Image   | `Image`      | `#ec4899` | 🌸 pink    |
+| Link    | `Link`       | `#10b981` | 🟢 emerald |
 
 ### Responsive
 
@@ -374,3 +374,19 @@ Icons are [Lucide](https://lucide.dev) names.
 - **Lucide Icons** — https://lucide.dev/icons
 - **OpenAI API** — https://platform.openai.com/docs
 - **Stripe** — https://stripe.com/docs
+
+## Design References
+
+- [Notation](https://notion.so)
+- Clean organization
+- [Linear](https:///linear.app)
+- Modern dev aesthetic
+- [Raycast](https://raycast.com)
+- Quick access patterns
+
+## Screenshots
+
+- Refer to the screenshots below for as a base for the dashboard UI. It does not have to be exact. Use it as a reference.
+
+- @context/screenshots/dashboard-ui-main.png
+- @context/screenshots/dashboard.ui-drawr.png
