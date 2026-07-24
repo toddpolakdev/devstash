@@ -2,7 +2,7 @@ import { Package } from "lucide-react";
 
 export function DashboardLogo() {
   return (
-    <div className="flex w-64 shrink-0 items-center gap-2 border-r border-border px-4">
+    <div className="flex items-center gap-2">
       <span className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
         <Package className="size-4" />
       </span>
