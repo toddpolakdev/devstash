@@ -1,0 +1,155 @@
+// DevStash database schema.
+// Prisma 7: the `prisma-client` generator (Rust-free) with a required `output`,
+// and the datasource URL is supplied via prisma.config.ts (see the repo root).
+// Migrations only — never `db push`. See context/coding-standards.md.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ContentType {
+  text
+  url
+  file
+}
+
+model User {
+  id                   String       @id @default(cuid())
+  email                String       @unique
+  name                 String?
+  image                String?
+  emailVerified        DateTime?
+  passwordHash         String? // bcrypt hash for credentials auth; null for OAuth-only users
+  isPro                Boolean      @default(false)
+  stripeCustomerId     String?      @unique
+  stripeSubscriptionId String?      @unique
+  items                Item[]
+  collections          Collection[]
+  itemTypes            ItemType[] // custom types; system types have a null owner
+  tags                 Tag[]
+  accounts             Account[]
+  sessions             Session[]
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+}
+
+model Item {
+  id          String           @id @default(cuid())
+  title       String
+  contentType ContentType      @default(text)
+  content     String? // text content, or null for files
+  fileUrl     String? // Cloudflare R2 URL, or null for text
+  fileName    String?
+  fileSize    Int? // bytes
+  url         String? // for link types
+  description String?
+  language    String? // optional, for code syntax highlighting
+  isFavorite  Boolean          @default(false)
+  isPinned    Boolean          @default(false)
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itemTypeId  String
+  itemType    ItemType         @relation(fields: [itemTypeId], references: [id]) // Restrict: can't delete a type still in use
+  collections ItemCollection[]
+  tags        Tag[]            @relation("ItemTags")
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([userId])
+  @@index([itemTypeId])
+}
+
+model ItemType {
+  id       String  @id @default(cuid())
+  name     String
+  icon     String // Lucide icon name, e.g. "Code"
+  color    String // hex, e.g. "#3b82f6"
+  isSystem Boolean @default(false)
+  userId   String? // null for system types
+  user     User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items    Item[]
+
+  @@unique([userId, name]) // no duplicate custom types per user
+  @@index([userId])
+}
+
+model Collection {
+  id            String           @id @default(cuid())
+  name          String
+  description   String?
+  isFavorite    Boolean          @default(false)
+  defaultTypeId String? // default type for empty collections
+  userId        String
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items         ItemCollection[]
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([userId])
+}
+
+// Explicit join table so we can track addedAt.
+model ItemCollection {
+  itemId       String
+  collectionId String
+  addedAt      DateTime   @default(now())
+  item         Item       @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+
+  @@id([itemId, collectionId])
+  @@index([collectionId])
+}
+
+model Tag {
+  id     String @id @default(cuid())
+  name   String
+  userId String // tags are scoped per user
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items  Item[] @relation("ItemTags")
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+// NextAuth (Auth.js) models.
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
