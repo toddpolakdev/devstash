@@ -1,7 +1,7 @@
 import { FolderClosed, FolderHeart, Package, Star, type LucideIcon } from "lucide-react";
 
 import type { CollectionStats } from "@/lib/db/collections";
-import { items } from "@/lib/mock-data";
+import type { ItemStats } from "@/lib/db/items";
 
 interface Stat {
   label: string;
@@ -10,17 +10,20 @@ interface Stat {
 }
 
 interface DashboardStatsProps {
+  itemStats: ItemStats;
   collectionStats: CollectionStats;
 }
 
-// Item counts still come from mock data until items move to the database.
-export function DashboardStats({ collectionStats }: DashboardStatsProps) {
+export function DashboardStats({
+  itemStats,
+  collectionStats,
+}: DashboardStatsProps) {
   const stats: Stat[] = [
-    { label: "Items", value: items.length, icon: Package },
+    { label: "Items", value: itemStats.total, icon: Package },
     { label: "Collections", value: collectionStats.total, icon: FolderClosed },
     {
       label: "Favorite Items",
-      value: items.filter((item) => item.isFavorite).length,
+      value: itemStats.favorites,
       icon: Star,
     },
     {

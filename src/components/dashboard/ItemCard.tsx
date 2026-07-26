@@ -1,35 +1,36 @@
 import Link from "next/link";
 import { Pin, Star } from "lucide-react";
 
-import type { Item } from "@/lib/mock-data";
+import type { ItemSummary } from "@/lib/db/items";
 import {
-  itemTypeById,
   typeBorderClasses,
   typeColorClasses,
   typeIcons,
 } from "@/lib/item-types";
-import { cn } from "@/lib/utils";
+import { cn, formatRelativeTime } from "@/lib/utils";
 
 interface ItemCardProps {
-  item: Item;
+  item: ItemSummary;
 }
 
 export function ItemCard({ item }: ItemCardProps) {
-  const type = itemTypeById.get(item.typeId);
-  const Icon = type ? typeIcons[type.icon] : undefined;
-  const isCode = item.typeId === "type_snippet" || item.typeId === "type_command";
+  const Icon = typeIcons[item.type.icon];
+  const isCode =
+    item.type.id === "type_snippet" || item.type.id === "type_command";
 
   return (
     <Link
       href={`/items/${item.id}`}
       className={cn(
         "flex flex-col rounded-xl border border-border border-l-4 bg-card p-4 transition-colors hover:bg-accent",
-        typeBorderClasses[item.typeId],
+        typeBorderClasses[item.type.id],
       )}
     >
       <div className="flex items-center gap-2">
         {Icon && (
-          <Icon className={cn("size-4 shrink-0", typeColorClasses[item.typeId])} />
+          <Icon
+            className={cn("size-4 shrink-0", typeColorClasses[item.type.id])}
+          />
         )}
         <h3 className="min-w-0 flex-1 truncate font-medium">{item.title}</h3>
         {item.isPinned && (
@@ -56,13 +57,13 @@ export function ItemCard({ item }: ItemCardProps) {
       )}
 
       <p className="mt-3 text-right text-xs text-muted-foreground">
-        {item.updatedAt}
+        {formatRelativeTime(item.updatedAt)}
       </p>
     </Link>
   );
 }
 
-function ItemPreview({ item, isCode }: { item: Item; isCode: boolean }) {
+function ItemPreview({ item, isCode }: { item: ItemSummary; isCode: boolean }) {
   if (item.contentType === "url") {
     return (
       <p className="mt-3 truncate text-sm text-muted-foreground">{item.url}</p>

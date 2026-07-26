@@ -8,8 +8,8 @@ import {
   getCollectionStats,
   getRecentCollections,
 } from "@/lib/db/collections";
+import { getItemStats, getPinnedItems, getRecentItems } from "@/lib/db/items";
 import { getCurrentUserId } from "@/lib/db/user";
-import { items } from "@/lib/mock-data";
 
 export const metadata: Metadata = {
   title: "Dashboard — DevStash",
@@ -19,15 +19,21 @@ export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const userId = await getCurrentUserId();
-  const [recentCollections, collectionStats] = userId
+  const [
+    recentCollections,
+    collectionStats,
+    pinnedItems,
+    recentItems,
+    itemStats,
+  ] = userId
     ? await Promise.all([
         getRecentCollections(userId),
         getCollectionStats(userId),
+        getPinnedItems(userId),
+        getRecentItems(userId),
+        getItemStats(userId),
       ])
-    : [[], { total: 0, favorites: 0 }];
-
-  const pinnedItems = items.filter((item) => item.isPinned);
-  const recentItems = items.slice(0, 10);
+    : [[], { total: 0, favorites: 0 }, [], [], { total: 0, favorites: 0 }];
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-8">
@@ -38,7 +44,7 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      <DashboardStats collectionStats={collectionStats} />
+      <DashboardStats itemStats={itemStats} collectionStats={collectionStats} />
 
       <section>
         <SectionHeading
