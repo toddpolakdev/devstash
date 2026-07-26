@@ -1,22 +1,21 @@
 import Link from "next/link";
 import { Star } from "lucide-react";
 
-import type { Collection } from "@/lib/mock-data";
+import type { CollectionSummary } from "@/lib/db/collections";
 import {
-  itemTypeById,
   typeBorderClasses,
   typeColorClasses,
   typeIcons,
   typeTintClasses,
 } from "@/lib/item-types";
-import { cn } from "@/lib/utils";
+import { cn, formatRelativeTime } from "@/lib/utils";
 
 interface CollectionCardProps {
-  collection: Collection;
+  collection: CollectionSummary;
 }
 
 export function CollectionCard({ collection }: CollectionCardProps) {
-  const dominantTypeId = collection.typeIds[0];
+  const dominantTypeId = collection.types[0]?.id ?? "";
 
   return (
     <Link
@@ -38,20 +37,22 @@ export function CollectionCard({ collection }: CollectionCardProps) {
       </p>
       <div className="mt-4 flex items-end justify-between gap-2">
         <div className="flex items-center gap-1.5">
-          {collection.typeIds.map((typeId) => {
-            const type = itemTypeById.get(typeId);
-            const Icon = type ? typeIcons[type.icon] : undefined;
+          {collection.types.map((type) => {
+            const Icon = typeIcons[type.icon];
             return Icon ? (
               <Icon
-                key={typeId}
-                className={cn("size-4", typeColorClasses[typeId])}
+                key={type.id}
+                className={cn("size-4", typeColorClasses[type.id])}
               />
             ) : null;
           })}
         </div>
         <div className="text-right text-xs text-muted-foreground">
-          <p>{collection.itemCount} items</p>
-          <p>{collection.updatedAt}</p>
+          <p>
+            {collection.itemCount}{" "}
+            {collection.itemCount === 1 ? "item" : "items"}
+          </p>
+          <p>{formatRelativeTime(collection.updatedAt)}</p>
         </div>
       </div>
     </Link>

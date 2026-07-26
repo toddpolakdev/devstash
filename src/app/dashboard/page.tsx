@@ -4,14 +4,28 @@ import { Clock, LayoutGrid, Pin, type LucideIcon } from "lucide-react";
 import { CollectionCard } from "@/components/dashboard/CollectionCard";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { ItemCard } from "@/components/dashboard/ItemCard";
-import { collections, items } from "@/lib/mock-data";
+import {
+  getCollectionStats,
+  getRecentCollections,
+} from "@/lib/db/collections";
+import { getCurrentUserId } from "@/lib/db/user";
+import { items } from "@/lib/mock-data";
 
 export const metadata: Metadata = {
   title: "Dashboard — DevStash",
 };
 
-export default function DashboardPage() {
-  const recentCollections = collections.slice(0, 8);
+export const dynamic = "force-dynamic";
+
+export default async function DashboardPage() {
+  const userId = await getCurrentUserId();
+  const [recentCollections, collectionStats] = userId
+    ? await Promise.all([
+        getRecentCollections(userId),
+        getCollectionStats(userId),
+      ])
+    : [[], { total: 0, favorites: 0 }];
+
   const pinnedItems = items.filter((item) => item.isPinned);
   const recentItems = items.slice(0, 10);
 
@@ -24,7 +38,7 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      <DashboardStats />
+      <DashboardStats collectionStats={collectionStats} />
 
       <section>
         <SectionHeading
@@ -32,11 +46,17 @@ export default function DashboardPage() {
           title="Recent Collections"
           count={recentCollections.length}
         />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {recentCollections.map((collection) => (
-            <CollectionCard key={collection.id} collection={collection} />
-          ))}
-        </div>
+        {recentCollections.length > 0 ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {recentCollections.map((collection) => (
+              <CollectionCard key={collection.id} collection={collection} />
+            ))}
+          </div>
+        ) : (
+          <p className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+            No collections yet.
+          </p>
+        )}
       </section>
 
       {pinnedItems.length > 0 && (
