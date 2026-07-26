@@ -4,8 +4,14 @@ import { useState, type ReactNode } from "react";
 
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { DashboardTopBar } from "@/components/dashboard/DashboardTopBar";
+import type { SidebarData } from "@/components/dashboard/SidebarNav";
 
-export function DashboardShell({ children }: { children: ReactNode }) {
+interface DashboardShellProps {
+  sidebar: SidebarData;
+  children: ReactNode;
+}
+
+export function DashboardShell({ sidebar, children }: DashboardShellProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -17,6 +23,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       />
       <div className="flex min-h-0 flex-1">
         <DashboardSidebar
+          data={sidebar}
           collapsed={collapsed}
           mobileOpen={mobileOpen}
           onCloseMobile={() => setMobileOpen(false)}
