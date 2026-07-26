@@ -1,6 +1,6 @@
 # Current Feature
 
-Dashboard — Items from the database. Replace the mock item data in the dashboard main area (Pinned Items and Recent Items) with real data from the Neon database via Prisma, following @context/features/dashboard-items-spec.md.
+Stats & Sidebar from the database. Move the sidebar off @src/lib/mock-data.ts — real item types and real collections — and confirm the stats row is fully database-backed, following @context/features/stats-sidebar-spec.md.
 
 ## Status
 
@@ -8,27 +8,31 @@ Completed
 
 ## Goals
 
-- Create `src/lib/db/items.ts` with the data-fetching functions for items (pinned items, recent items, and the item stats)
-- Fetch items directly in the `/dashboard` server component (no client-side fetching, no API route), alongside the existing collection queries
-- Render the same Pinned Items / Recent Items card grids, sourced from the database instead of @src/lib/mock-data.ts
-- Keep the existing design exactly as-is (see @context/screenshots/dashboard-ui-main.png)
-- Derive each item card's left accent border and type icon color from the item's type
-- Keep everything the card shows today: type icon, title, pin/favorite markers, the content preview (code block / URL / clamped text), tag chips, and the relative updated time
-- Hide the Pinned Items section entirely when there are no pinned items
-- Update the stats row so Items / Favorite Items use real counts (Collections / Favorite Collections already do)
+- Add the sidebar data-fetching functions: item types in `src/lib/db/items.ts`, favorite + recent collections in `src/lib/db/collections.ts`
+- Render the item types list in `SidebarNav` from the database, each with its type icon and color, linking to `/items/[typename]`
+- Render Favorite Collections and Recent Collections from the database, keeping the star icon on favorites
+- Give each recent collection a colored dot based on its most-used item type (favorites keep the star)
+- Add a "View all collections" link under the collections list pointing at `/collections`
+- Keep the stats row on real database counts, with the current design/layout untouched
+- Keep the sidebar's existing design/layout exactly as-is (collapse, mobile drawer, active-route highlight, Settings + user area)
 
 ## Notes
 
-- This finishes the main area's move off mock data. After this pass @src/lib/mock-data.ts should only be feeding `src/lib/item-types.ts` (the built-in type list) and `SidebarNav` — the sidebar is a separate, later feature.
-- `ItemCard` currently takes the mock `Item` type. It needs a DB-shaped summary type from `src/lib/db/items.ts` (mirroring how `CollectionCard` took `CollectionSummary`): `tags` becomes a relation to map to names, and `updatedAt` becomes a real `Date` rendered through the existing `formatRelativeTime` helper in `src/lib/utils.ts`.
-- The preview logic keys off `contentType` (`url` → show `url`) and the `type_snippet` / `type_command` ids (→ monospace code block), so the query needs `contentType`, `content`, `description`, `url`, and the item's `itemType`.
-- Reuse the existing `typeBorderClasses` / `typeColorClasses` / `itemTypeById` maps in `src/lib/item-types.ts` — same id-keyed caveat as before: custom user types (cuid ids) fall through to no accent color.
-- Watch for N+1 queries: pull tags and the item type through a nested `select` in one `findMany` per section rather than per-card lookups.
-- Item stats are counts (`prisma.item.count`), not `items.length` on a truncated list — the recent list is limited, so the totals have to be queried separately, the way `getCollectionStats` does.
+- **The stats half is already done.** The four stat cards went database-backed in the two previous passes (`getCollectionStats` + `getItemStats`), so this pass is verification only — no changes to `DashboardStats` unless something is actually wrong.
+- **`src/lib/db/items.ts` already exists** (pinned/recent items + stats). The spec's "create it" means add the item-type query to it, not rewrite it. Follow the same shape as the existing functions: explicit `userId` arg, one `findMany` with a `select`.
+- **Server/client boundary is the main design decision.** `SidebarNav` is `"use client"` (it uses `usePathname`) and is rendered by `DashboardSidebar` ← `DashboardShell`, both client components. Prisma can't run there, so `src/app/dashboard/layout.tsx` (a server component) has to fetch and thread the data down as props: `layout → DashboardShell → DashboardSidebar → SidebarNav`. The layout will need to be dynamic like `/dashboard` is.
+- Item types are global system rows (`isSystem: true`, `userId: null`) plus, later, a user's custom types — so the query is `where: { OR: [{ isSystem: true }, { userId }] }`, not a plain `userId` filter.
+- **Seeded type names are lowercase** (`snippet`, `prompt`, …) while the mock list was capitalized. `itemTypeSlug()` still produces the right `/items/snippets` href, but the sidebar label needs capitalizing for display.
+- `ItemType` has no `isPro` or `category` column — those were mock-only fields. The Pro badge on File/Image has to come from a static list in the app (or be dropped); decide and keep it consistent with the project-overview tier table.
+- The recent-collection dot needs a `bg-*` class per type; `typeColorClasses` is `text-*`. Add a literal `typeDotClasses` map in `src/lib/item-types.ts` so Tailwind can scan the class names.
+- `getRecentCollections` already returns `types[]` ranked most-used-first, so the dot is `types[0]` — reuse it (with `limit = 5`) rather than writing a second ranking query. Favorites need a new `where: { isFavorite: true }` query in the same file.
+- Same id-keyed caveat as before: the color maps are keyed on `type_snippet`-style seed ids, so future custom types (cuid ids) fall through to no color. `ItemType.color` (hex) is in the DB if we ever want to move off the maps — not this pass.
+- **`/collections` and `/items/[typename]` routes don't exist yet**, so those links will 404. That's expected — the sidebar already links to non-existent `/favorites`, `/recent`, `/settings`, and `/collections/[id]`.
+- The user avatar area (`currentUser`) at the bottom of the sidebar is **out of scope** — it stays on mock data until auth lands.
+- After this pass `mock-data.ts` should only be feeding `itemTypeById` in `src/lib/item-types.ts`, which nothing currently consumes — flag it for cleanup rather than deleting files unasked.
 - `getCurrentUserId()` in `src/lib/db/user.ts` is still the no-auth demo-user placeholder; every new db function takes an explicit `userId` for the same reason.
-- `/dashboard` is already `force-dynamic`, so no build-time snapshot to worry about.
-- The seed has 18 items across 5 collections with a few pins/favorites, so both sections and the empty-pinned case are testable against the Neon dev branch.
-- Related references: @context/features/dashboard-items-spec.md, @context/features/dashboard-collections-spec.md, @context/features/dashboard-phase-3-spec.md, @prisma/schema.prisma, @src/lib/prisma.ts
+- Seed data to verify against: 7 system types, 5 collections (2 favorites), 18 items — so favorites, recents, and per-collection dominant types are all testable on the Neon dev branch.
+- Related references: @context/features/stats-sidebar-spec.md, @context/features/dashboard-items-spec.md, @context/features/dashboard-collections-spec.md, @context/features/dashboard-phase-2-spec.md, @prisma/schema.prisma, @src/lib/db/collections.ts
 
 ## History
 
@@ -52,3 +56,7 @@ Completed
 - **2026-07-25** — Started Dashboard Items from the database. Set as the current feature with status In Progress; no implementation work yet.
 - **2026-07-25** — Completed Dashboard Items from the database on `feature/dashboard-items` (full spec: @context/features/dashboard-items-spec.md). Added `src/lib/db/items.ts` with `getPinnedItems(userId, limit = 8)`, `getRecentItems(userId, limit = 10)`, and `getItemStats(userId)`. All three share a private `findItemSummaries(where, take)` helper over one `findMany` (ordered by `updatedAt` desc) with a shared `itemSummarySelect` (`satisfies Prisma.ItemSelect`) that pulls the `itemType` and `tags` relations in the same query — no per-card lookups; stats are two `count` calls in a `Promise.all`. `ItemSummary` carries the item type as a nested `{ id, name, icon }` object (mirroring `CollectionSummary.types`) and `tags` flattened to `string[]`. `src/app/dashboard/page.tsx` now fetches all five queries in one `Promise.all`. `ItemCard` takes an `ItemSummary` instead of the mock `Item` — identical markup, but the icon comes from `typeIcons[item.type.icon]`, the accent/color classes key off `item.type.id`, and `updatedAt` is a real `Date` through `formatRelativeTime`; it no longer imports `mock-data` at all. `DashboardStats` gained an `itemStats` prop, so all four stat cards are now database-backed. Verified against the seeded Neon dev branch: stats read Items 18 / Collections 5 / Favorite Items 3 / Favorite Collections 2 (matching a direct DB query), Pinned Items renders exactly the 2 pinned items ("Senior code reviewer", "useDebounce hook"), Recent Items renders the 10 most recently updated, and each card shows the right accent + icon per type (link → emerald, command → orange, prompt → violet) with URL / code-block / text previews, tag chips, and relative times. Lint, `tsc --noEmit`, and build pass.
   - **Note:** `mock-data.ts` is now only used by `src/lib/item-types.ts` (built-in type list) and `SidebarNav` — the sidebar is still on mock data by design.
+- **2026-07-26** — Started Stats & Sidebar from the database. Set as the current feature with status In Progress; no implementation work yet.
+- **2026-07-26** — Completed Stats & Sidebar from the database on `feature/stats-sidebar` (full spec: @context/features/stats-sidebar-spec.md). Added `getItemTypes(userId)` to `src/lib/db/items.ts` (system types `OR` the user's own custom types, ordered system-first then name) and `getFavoriteCollections(userId, limit = 5)` / `getRecentCollectionNav(userId, limit = 5)` to `src/lib/db/collections.ts` — both over a shared private `findCollectionNavItems(where, take)` that reuses the existing `rankTypesByUsage` helper so each row carries only `{ id, name, type }`, where `type` is the most-used item type. Because `SidebarNav` is a client component (`usePathname`) behind two more client components, `src/app/dashboard/layout.tsx` became an async `force-dynamic` server component that runs the three queries in one `Promise.all` and threads a single `SidebarData` object down `DashboardShell → DashboardSidebar → SidebarNav`. `SidebarNav` no longer reads collections/item types from `mock-data.ts`: item types render from the DB with `itemTypeLabel()` (seeded names are lowercase) and `isProType()` for the Pro badge (`ItemType` has no tier column — File/Image come from a static id set in `item-types.ts`, per the project-overview tier table), favorites keep the amber star, and recents get a new `TypeDot` colored from a literal `typeDotClasses` map. Added a "View all collections" link (`ChevronRight`) under the collections list. `DashboardStats` was left untouched — already database-backed. Verified against the seeded Neon dev branch: all 7 types in the sidebar with correct colors, slugs (`/items/snippets` …) and Pro badges on File/Image only; Favorite Collections = AI Workflows + React Patterns (2 stars); Recent Collections = Design Resources, Terminal Commands, DevOps, AI Workflows, React Patterns with dots emerald/orange/emerald/violet/blue matching each collection's dominant type; stats read Items 18 / Collections 5 / Favorite Items 3 / Favorite Collections 2. Lint, `tsc --noEmit`, and build pass.
+  - **Note:** item types are now ordered alphabetically (Command, File, Image, Link, Note, Prompt, Snippet) rather than the old hand-authored mock order — `ItemType` has no sort column. Add one (or a display-order constant) if the original order matters.
+  - **Cleanup left for later:** `mock-data.ts` is now only reached by `currentUser` in the sidebar's avatar area (waiting on auth) and by `itemTypeById` in `src/lib/item-types.ts`, which nothing consumes.

@@ -47,6 +47,18 @@ export const typeBorderClasses: Record<string, string> = {
   type_image: "border-l-pink-500",
 };
 
+// Dot color per type, for the sidebar's recent collections (literal strings so
+// Tailwind can scan them).
+export const typeDotClasses: Record<string, string> = {
+  type_snippet: "bg-blue-500",
+  type_command: "bg-orange-500",
+  type_prompt: "bg-violet-500",
+  type_note: "bg-yellow-300",
+  type_link: "bg-emerald-500",
+  type_file: "bg-gray-500",
+  type_image: "bg-pink-500",
+};
+
 // Subtle background tint per type (literal strings so Tailwind can scan them).
 export const typeTintClasses: Record<string, string> = {
   type_snippet: "bg-blue-500/5",
@@ -58,7 +70,20 @@ export const typeTintClasses: Record<string, string> = {
   type_image: "bg-pink-500/5",
 };
 
+// Pro-only built-in types (the DB has no tier column — see the tier table in
+// context/project-overview.md).
+const PRO_TYPE_IDS = new Set(["type_file", "type_image"]);
+
+export function isProType(id: string): boolean {
+  return PRO_TYPE_IDS.has(id);
+}
+
 // Route slug for an item type, e.g. "Snippet" -> "snippets" (/items/snippets).
 export function itemTypeSlug(name: string): string {
   return `${name.toLowerCase()}s`;
+}
+
+// Display label for an item type; type names are stored lowercase.
+export function itemTypeLabel(name: string): string {
+  return name.charAt(0).toUpperCase() + name.slice(1);
 }

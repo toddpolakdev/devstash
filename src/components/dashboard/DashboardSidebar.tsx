@@ -3,17 +3,19 @@
 import { X } from "lucide-react";
 
 import { DashboardLogo } from "@/components/dashboard/DashboardLogo";
-import { SidebarNav } from "@/components/dashboard/SidebarNav";
+import { SidebarNav, type SidebarData } from "@/components/dashboard/SidebarNav";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface DashboardSidebarProps {
+  data: SidebarData;
   collapsed: boolean;
   mobileOpen: boolean;
   onCloseMobile: () => void;
 }
 
 export function DashboardSidebar({
+  data,
   collapsed,
   mobileOpen,
   onCloseMobile,
@@ -27,7 +29,7 @@ export function DashboardSidebar({
         )}
       >
         <div className="h-full w-64">
-          <SidebarNav />
+          <SidebarNav data={data} />
         </div>
       </aside>
 
@@ -63,7 +65,7 @@ export function DashboardSidebar({
             </Button>
           </div>
           <div className="min-h-0 flex-1">
-            <SidebarNav onNavigate={onCloseMobile} />
+            <SidebarNav data={data} onNavigate={onCloseMobile} />
           </div>
         </aside>
       </div>

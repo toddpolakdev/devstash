@@ -3,20 +3,35 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Clock, Settings, Star } from "lucide-react";
+import { ChevronRight, Clock, Settings, Star } from "lucide-react";
 
-import { collections, currentUser, itemTypes } from "@/lib/mock-data";
-import { itemTypeSlug, typeColorClasses, typeIcons } from "@/lib/item-types";
+import type { CollectionNavItem } from "@/lib/db/collections";
+import type { ItemTypeSummary } from "@/lib/db/items";
+import { currentUser } from "@/lib/mock-data";
+import {
+  isProType,
+  itemTypeLabel,
+  itemTypeSlug,
+  typeColorClasses,
+  typeDotClasses,
+  typeIcons,
+} from "@/lib/item-types";
 import { cn } from "@/lib/utils";
 
+export interface SidebarData {
+  itemTypes: ItemTypeSummary[];
+  favoriteCollections: CollectionNavItem[];
+  recentCollections: CollectionNavItem[];
+}
+
 interface SidebarNavProps {
+  data: SidebarData;
   onNavigate?: () => void;
 }
 
-export function SidebarNav({ onNavigate }: SidebarNavProps) {
+export function SidebarNav({ data, onNavigate }: SidebarNavProps) {
   const pathname = usePathname();
-  const favoriteCollections = collections.filter((c) => c.isFavorite);
-  const recentCollections = collections.slice(0, 5);
+  const { itemTypes, favoriteCollections, recentCollections } = data;
 
   return (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
@@ -51,13 +66,13 @@ export function SidebarNav({ onNavigate }: SidebarNavProps) {
               <li key={type.id}>
                 <SidebarLink
                   href={href}
-                  label={type.name}
+                  label={itemTypeLabel(type.name)}
                   icon={
                     Icon ? (
                       <Icon className={cn("size-4", typeColorClasses[type.id])} />
                     ) : null
                   }
-                  badge={type.isPro ? "Pro" : undefined}
+                  badge={isProType(type.id) ? "Pro" : undefined}
                   active={pathname === href}
                   onNavigate={onNavigate}
                 />
@@ -94,11 +109,21 @@ export function SidebarNav({ onNavigate }: SidebarNavProps) {
               <SidebarLink
                 href={`/collections/${collection.id}`}
                 label={collection.name}
+                icon={<TypeDot typeId={collection.type?.id} />}
                 active={pathname === `/collections/${collection.id}`}
                 onNavigate={onNavigate}
               />
             </li>
           ))}
+          <li>
+            <SidebarLink
+              href="/collections"
+              label="View all collections"
+              icon={<ChevronRight className="size-4" />}
+              active={pathname === "/collections"}
+              onNavigate={onNavigate}
+            />
+          </li>
         </ul>
       </nav>
 
@@ -161,6 +186,21 @@ function SidebarLink({
       {badge && <NavBadge>{badge}</NavBadge>}
       {trailing}
     </Link>
+  );
+}
+
+// Colored circle for a collection's most-used item type, sized to line up with
+// the 4-unit icons on the other links.
+function TypeDot({ typeId }: { typeId?: string }) {
+  return (
+    <span className="flex size-4 shrink-0 items-center justify-center">
+      <span
+        className={cn(
+          "size-2 rounded-full",
+          (typeId && typeDotClasses[typeId]) || "bg-muted-foreground/40",
+        )}
+      />
+    </span>
   );
 }
 

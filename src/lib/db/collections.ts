@@ -1,3 +1,4 @@
+import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export interface CollectionType {
@@ -19,6 +20,14 @@ export interface CollectionSummary {
 export interface CollectionStats {
   total: number;
   favorites: number;
+}
+
+// Trimmed shape for the sidebar lists — `type` is the most-used type in the
+// collection and drives the colored dot.
+export interface CollectionNavItem {
+  id: string;
+  name: string;
+  type: CollectionType | null;
 }
 
 // Most recently updated collections, with the item count and the item types
@@ -56,6 +65,20 @@ export async function getRecentCollections(
   }));
 }
 
+export function getFavoriteCollections(
+  userId: string,
+  limit = 5,
+): Promise<CollectionNavItem[]> {
+  return findCollectionNavItems({ userId, isFavorite: true }, limit);
+}
+
+export function getRecentCollectionNav(
+  userId: string,
+  limit = 5,
+): Promise<CollectionNavItem[]> {
+  return findCollectionNavItems({ userId }, limit);
+}
+
 export async function getCollectionStats(
   userId: string,
 ): Promise<CollectionStats> {
@@ -65,6 +88,36 @@ export async function getCollectionStats(
   ]);
 
   return { total, favorites };
+}
+
+// Most recently updated first, carrying only what the sidebar renders.
+async function findCollectionNavItems(
+  where: Prisma.CollectionWhereInput,
+  take: number,
+): Promise<CollectionNavItem[]> {
+  const collections = await prisma.collection.findMany({
+    where,
+    orderBy: { updatedAt: "desc" },
+    take,
+    select: {
+      id: true,
+      name: true,
+      items: {
+        select: {
+          item: {
+            select: {
+              itemType: { select: { id: true, name: true, icon: true } },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return collections.map(({ items, ...collection }) => ({
+    ...collection,
+    type: rankTypesByUsage(items.map(({ item }) => item.itemType))[0] ?? null,
+  }));
 }
 
 // Distinct types ordered by how many items in the collection use them.

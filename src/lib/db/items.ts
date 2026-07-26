@@ -49,6 +49,15 @@ export function getRecentItems(userId: string, limit = 10) {
   return findItemSummaries({ userId }, limit);
 }
 
+// The built-in system types plus the user's own custom types.
+export function getItemTypes(userId: string): Promise<ItemTypeSummary[]> {
+  return prisma.itemType.findMany({
+    where: { OR: [{ isSystem: true }, { userId }] },
+    orderBy: [{ isSystem: "desc" }, { name: "asc" }],
+    select: { id: true, name: true, icon: true },
+  });
+}
+
 export async function getItemStats(userId: string): Promise<ItemStats> {
   const [total, favorites] = await Promise.all([
     prisma.item.count({ where: { userId } }),
