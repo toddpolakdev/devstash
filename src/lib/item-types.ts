@@ -9,11 +9,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import { itemTypes } from "@/lib/mock-data";
-
-// Lookup an ItemType by its id.
-export const itemTypeById = new Map(itemTypes.map((type) => [type.id, type]));
-
 // Maps the `icon` string stored on each ItemType to its Lucide component.
 export const typeIcons: Record<string, LucideIcon> = {
   Code,
