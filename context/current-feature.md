@@ -1,38 +1,12 @@
 # Current Feature
 
-Stats & Sidebar from the database. Move the sidebar off @src/lib/mock-data.ts — real item types and real collections — and confirm the stats row is fully database-backed, following @context/features/stats-sidebar-spec.md.
-
 ## Status
 
-Completed
+Not Started
 
 ## Goals
 
-- Add the sidebar data-fetching functions: item types in `src/lib/db/items.ts`, favorite + recent collections in `src/lib/db/collections.ts`
-- Render the item types list in `SidebarNav` from the database, each with its type icon and color, linking to `/items/[typename]`
-- Render Favorite Collections and Recent Collections from the database, keeping the star icon on favorites
-- Give each recent collection a colored dot based on its most-used item type (favorites keep the star)
-- Add a "View all collections" link under the collections list pointing at `/collections`
-- Keep the stats row on real database counts, with the current design/layout untouched
-- Keep the sidebar's existing design/layout exactly as-is (collapse, mobile drawer, active-route highlight, Settings + user area)
-
 ## Notes
-
-- **The stats half is already done.** The four stat cards went database-backed in the two previous passes (`getCollectionStats` + `getItemStats`), so this pass is verification only — no changes to `DashboardStats` unless something is actually wrong.
-- **`src/lib/db/items.ts` already exists** (pinned/recent items + stats). The spec's "create it" means add the item-type query to it, not rewrite it. Follow the same shape as the existing functions: explicit `userId` arg, one `findMany` with a `select`.
-- **Server/client boundary is the main design decision.** `SidebarNav` is `"use client"` (it uses `usePathname`) and is rendered by `DashboardSidebar` ← `DashboardShell`, both client components. Prisma can't run there, so `src/app/dashboard/layout.tsx` (a server component) has to fetch and thread the data down as props: `layout → DashboardShell → DashboardSidebar → SidebarNav`. The layout will need to be dynamic like `/dashboard` is.
-- Item types are global system rows (`isSystem: true`, `userId: null`) plus, later, a user's custom types — so the query is `where: { OR: [{ isSystem: true }, { userId }] }`, not a plain `userId` filter.
-- **Seeded type names are lowercase** (`snippet`, `prompt`, …) while the mock list was capitalized. `itemTypeSlug()` still produces the right `/items/snippets` href, but the sidebar label needs capitalizing for display.
-- `ItemType` has no `isPro` or `category` column — those were mock-only fields. The Pro badge on File/Image has to come from a static list in the app (or be dropped); decide and keep it consistent with the project-overview tier table.
-- The recent-collection dot needs a `bg-*` class per type; `typeColorClasses` is `text-*`. Add a literal `typeDotClasses` map in `src/lib/item-types.ts` so Tailwind can scan the class names.
-- `getRecentCollections` already returns `types[]` ranked most-used-first, so the dot is `types[0]` — reuse it (with `limit = 5`) rather than writing a second ranking query. Favorites need a new `where: { isFavorite: true }` query in the same file.
-- Same id-keyed caveat as before: the color maps are keyed on `type_snippet`-style seed ids, so future custom types (cuid ids) fall through to no color. `ItemType.color` (hex) is in the DB if we ever want to move off the maps — not this pass.
-- **`/collections` and `/items/[typename]` routes don't exist yet**, so those links will 404. That's expected — the sidebar already links to non-existent `/favorites`, `/recent`, `/settings`, and `/collections/[id]`.
-- The user avatar area (`currentUser`) at the bottom of the sidebar is **out of scope** — it stays on mock data until auth lands.
-- After this pass `mock-data.ts` should only be feeding `itemTypeById` in `src/lib/item-types.ts`, which nothing currently consumes — flag it for cleanup rather than deleting files unasked.
-- `getCurrentUserId()` in `src/lib/db/user.ts` is still the no-auth demo-user placeholder; every new db function takes an explicit `userId` for the same reason.
-- Seed data to verify against: 7 system types, 5 collections (2 favorites), 18 items — so favorites, recents, and per-collection dominant types are all testable on the Neon dev branch.
-- Related references: @context/features/stats-sidebar-spec.md, @context/features/dashboard-items-spec.md, @context/features/dashboard-collections-spec.md, @context/features/dashboard-phase-2-spec.md, @prisma/schema.prisma, @src/lib/db/collections.ts
 
 ## History
 
@@ -60,3 +34,7 @@ Completed
 - **2026-07-26** — Completed Stats & Sidebar from the database on `feature/stats-sidebar` (full spec: @context/features/stats-sidebar-spec.md). Added `getItemTypes(userId)` to `src/lib/db/items.ts` (system types `OR` the user's own custom types, ordered system-first then name) and `getFavoriteCollections(userId, limit = 5)` / `getRecentCollectionNav(userId, limit = 5)` to `src/lib/db/collections.ts` — both over a shared private `findCollectionNavItems(where, take)` that reuses the existing `rankTypesByUsage` helper so each row carries only `{ id, name, type }`, where `type` is the most-used item type. Because `SidebarNav` is a client component (`usePathname`) behind two more client components, `src/app/dashboard/layout.tsx` became an async `force-dynamic` server component that runs the three queries in one `Promise.all` and threads a single `SidebarData` object down `DashboardShell → DashboardSidebar → SidebarNav`. `SidebarNav` no longer reads collections/item types from `mock-data.ts`: item types render from the DB with `itemTypeLabel()` (seeded names are lowercase) and `isProType()` for the Pro badge (`ItemType` has no tier column — File/Image come from a static id set in `item-types.ts`, per the project-overview tier table), favorites keep the amber star, and recents get a new `TypeDot` colored from a literal `typeDotClasses` map. Added a "View all collections" link (`ChevronRight`) under the collections list. `DashboardStats` was left untouched — already database-backed. Verified against the seeded Neon dev branch: all 7 types in the sidebar with correct colors, slugs (`/items/snippets` …) and Pro badges on File/Image only; Favorite Collections = AI Workflows + React Patterns (2 stars); Recent Collections = Design Resources, Terminal Commands, DevOps, AI Workflows, React Patterns with dots emerald/orange/emerald/violet/blue matching each collection's dominant type; stats read Items 18 / Collections 5 / Favorite Items 3 / Favorite Collections 2. Lint, `tsc --noEmit`, and build pass.
   - **Note:** item types are now ordered alphabetically (Command, File, Image, Link, Note, Prompt, Snippet) rather than the old hand-authored mock order — `ItemType` has no sort column. Add one (or a display-order constant) if the original order matters.
   - **Cleanup left for later:** `mock-data.ts` is now only reached by `currentUser` in the sidebar's avatar area (waiting on auth) and by `itemTypeById` in `src/lib/item-types.ts`, which nothing consumes.
+- **2026-09-22** — Started Add Pro Badge to Sidebar. Set as the current feature with status In Progress; no implementation work yet.
+- **2026-09-22** — Completed Add Pro Badge to Sidebar on `feature/pro-badge-sidebar` (full spec: @context/features/add-pro-badge-sidebar.md). The sidebar already marked File and Image as Pro via a hand-rolled `NavBadge` `<span>`, so this pass swapped that one-off for the shadcn/ui `Badge`: installed `src/components/ui/badge.tsx` and rewrote `NavBadge` to render `<Badge variant="secondary">` shrunk with `h-4 px-1.5 text-[10px] font-semibold tracking-wide text-muted-foreground uppercase` (tailwind-merge drops the component's own `h-5 px-2 text-xs`), keeping the marker quiet next to the type icon/label. Both call sites now pass the literal string `PRO` instead of `"Pro"` + a CSS transform, and the user avatar area's Pro badge moved to the same component so the two can't drift apart. `isProType()` / `PRO_TYPE_IDS` in `src/lib/item-types.ts` was left as-is — File + Image, per the project-overview tier table. Verified against the seeded Neon dev branch: `/dashboard` renders 200 with `data-slot="badge"` on exactly File and Image (plus the user area), six across the desktop sidebar and mobile drawer, and the merged class list confirms the size overrides win. Lint, `tsc --noEmit`, and build pass.
+  - **⚠️ shadcn CLI caveat:** `npx shadcn add badge` generated `import { cn } from "cn"` and installed an unrelated npm package named `cn` (v0.4.0) to satisfy it. Uninstalled it and repointed the import at `@/lib/utils` (matching `button.tsx`); `package.json`/`package-lock.json` are clean. As with `button.tsx`, `"use client"` was added to `badge.tsx` because of the `radix-ui` barrel import. Check both on future shadcn installs.
+  - **Note:** the user avatar badge still shows because it reads `currentUser.isPro` from `mock-data.ts` (`true`); the seeded demo user is `isPro: false`, so it will disappear when auth lands.
