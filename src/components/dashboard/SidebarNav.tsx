@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronRight, Clock, Settings, Star } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import type { CollectionNavItem } from "@/lib/db/collections";
 import type { ItemTypeSummary } from "@/lib/db/items";
 import { currentUser } from "@/lib/mock-data";
@@ -72,7 +73,7 @@ export function SidebarNav({ data, onNavigate }: SidebarNavProps) {
                       <Icon className={cn("size-4", typeColorClasses[type.id])} />
                     ) : null
                   }
-                  badge={isProType(type.id) ? "Pro" : undefined}
+                  badge={isProType(type.id) ? "PRO" : undefined}
                   active={pathname === href}
                   onNavigate={onNavigate}
                 />
@@ -145,7 +146,7 @@ export function SidebarNav({ data, onNavigate }: SidebarNavProps) {
               {currentUser.email}
             </p>
           </div>
-          {currentUser.isPro && <NavBadge>Pro</NavBadge>}
+          {currentUser.isPro && <NavBadge>PRO</NavBadge>}
         </div>
       </div>
     </div>
@@ -212,10 +213,14 @@ function SectionLabel({ children }: { children: ReactNode }) {
   );
 }
 
+// Small, muted pill used for the PRO markers in the sidebar.
 function NavBadge({ children }: { children: ReactNode }) {
   return (
-    <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-muted-foreground uppercase">
+    <Badge
+      variant="secondary"
+      className="h-4 px-1.5 text-[10px] font-semibold tracking-wide text-muted-foreground uppercase"
+    >
       {children}
-    </span>
+    </Badge>
   );
 }
